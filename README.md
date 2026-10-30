@@ -87,3 +87,11 @@ On ne peut pas remonter avant le **30 octobre 2026** (flèches « ‹ » grisée
 node --test tests/test_logique.js     # 40 tests : A/B, vacances, emploi du temps, blocs libres, répétition, tâches, calendrier, données abîmées
 python3 tests/e2e.py                  # ~200 vérifications dans un iPhone simulé (Playwright + Chromium)
 ```
+
+## Widgets iPhone (Scriptable)
+
+Un widget ne peut pas lire les données de l'app (elles restent dans Safari). Le pont :
+
+1. Dans l'app : **Plus › Réglages › Mettre à jour les widgets** crée le fichier `temps-widget.json` (28 jours d'emploi du temps, tâches, colles).
+2. Dans la feuille de partage : **Enregistrer dans Fichiers** › iCloud Drive › **Scriptable** › Remplacer.
+3. Les scripts `widget-journee.js` (emploi du temps + to-do, taille grande) et `widget-colles.js` (colles de la semaine, taille moyenne) lisent ce fichier. Ils se rafraîchissent seuls, mais les données ne changent que quand tu refais l'étape 1.

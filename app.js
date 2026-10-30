@@ -372,6 +372,8 @@
       '<h2>Ma journée</h2><div class="liste"><button type="button" class="ligne" data-act="reveil"><span class="corps"><b>Lever et coucher</b><span class="gris">' + p.lever + ' → ' + p.coucher + ' · les trous entre les cours deviennent des blocs libres</span></span><span class="fleche">›</span></button></div>' +
       '<h2>Semaines A / B</h2><div class="liste"><div class="bascule"><div class="t"><b>Inverser A et B</b><span>Cette semaine est la semaine ' + ab + '. Si ce n’est pas la bonne, inverse.</span></div>' +
       '<button type="button" class="sw" role="switch" data-act="flip" aria-checked="' + !!p.flip + '" aria-label="Inverser les semaines A et B"></button></div></div>' +
+      '<h2>Widgets</h2><div class="liste">' +
+      '<button type="button" class="lien-bloc" data-act="widgets">Mettre à jour les widgets<small>Crée un fichier à enregistrer dans Fichiers › iCloud Drive › Scriptable (Remplacer).</small></button></div>' +
       '<h2>Sauvegarde</h2><div class="liste">' +
       '<button type="button" class="lien-bloc" data-act="exporter">Exporter mes données<small>Crée un fichier de sauvegarde (à garder dans Fichiers ou iCloud).</small></button>' +
       '<button type="button" class="lien-bloc" data-act="importer">Importer une sauvegarde<small>Remplace tout ce qui est dans l’app.</small></button></div>' +
@@ -717,12 +719,22 @@
   }
 
   /* ---- Sauvegarde ---- */
-  function telecharger(txt, nom) {
+  function telecharger(txt, nom, msg) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = nom;
     document.body.appendChild(a); a.click();
     setTimeout(function () { try { URL.revokeObjectURL(a.href); } catch (e) { /* rien */ } a.remove(); }, 1500);
-    toast('Sauvegarde exportée.');
+    toast(msg || 'Sauvegarde exportée.');
+  }
+  // Fichier pour les widgets : à enregistrer dans Fichiers › iCloud Drive › Scriptable (écrase l'ancien)
+  function exporterWidgets() {
+    var txt = JSON.stringify(T.pourWidgets(E.data, auj(), Date.now())), nom = 'temps-widget.json', fichier = null;
+    try { fichier = new File([txt], nom, { type: 'application/json' }); } catch (e) { /* vieux navigateur */ }
+    if (fichier && navigator.canShare && navigator.share && navigator.canShare({ files: [fichier] })) {
+      navigator.share({ files: [fichier], title: 'Widgets Temps' }).catch(function (e) { if (!e || e.name !== 'AbortError') telecharger(txt, nom, 'Fichier widgets exporté.'); });
+      return;
+    }
+    telecharger(txt, nom, 'Fichier widgets exporté.');
   }
   function exporter() {
     var txt = T.exporter(E.data, Date.now()), nom = 'temps-sauvegarde-' + auj() + '.json', fichier = null;
@@ -854,6 +866,7 @@
     },
     flip: function () { modifier(function () { E.data.prefs.flip = E.data.prefs.flip ? 0 : 1; }); },
     exporter: exporter,
+    widgets: exporterWidgets,
     importer: function () { var f = $('#fichier'); if (f) f.click(); },
     'import-scolarite': importerScolarite,
     'reset-edt': function () {

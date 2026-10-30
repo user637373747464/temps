@@ -372,7 +372,34 @@
     };
   }
 
+  /* ------------------------------------------------------------------ */
+  /* 9. Fichier pour les widgets (lu par les scripts Scriptable)         */
+  /* ------------------------------------------------------------------ */
+  // 28 journées toutes prêtes à partir d'aujourd'hui (sans les « blocs libres »), les tâches et les colles de la semaine en cours et à venir.
+  function pourWidgets(data, aujourdhui, maintenant) {
+    var jours = {}, i, s, j;
+    for (i = 0; i < 28; i++) {
+      s = ajouterJours(aujourdhui, i);
+      j = composerJour(s, data);
+      jours[s] = {
+        semaine: j.semaine, periode: j.periode, vacances: j.vacances,
+        journee: j.journee.map(function (x) { return { kind: x.kind, titre: x.titre }; }),
+        items: j.items.filter(function (it) { return it.kind !== 'vide'; }).map(function (it) {
+          return { kind: it.kind, debut: it.debut, fin: it.fin, titre: it.titre, detail: it.detail || '', prof: it.prof || '', salle: it.salle || '' };
+        })
+      };
+    }
+    var lundi = lundiDe(aujourdhui);
+    return {
+      app: 'temps-widget', version: 1, genere: maintenant || Date.now(), aujourdhui: aujourdhui, jours: jours,
+      taches: data.taches.map(function (t) { return { texte: t.texte, date: t.date, fait: !!t.fait }; }),
+      colles: data.colles.filter(function (c) { return c.date >= lundi; }).sort(function (a, b) { return (a.date + (a.debut || '99')).localeCompare(b.date + (b.debut || '99')); })
+        .map(function (c) { return { date: c.date, debut: c.debut, duree: c.duree, matiere: c.matiere, colleur: c.colleur, salle: c.salle }; })
+    };
+  }
+
   return {
+    pourWidgets: pourWidgets,
     JOURS: JOURS, MOIS: MOIS, MIN_VIDE: MIN_VIDE, MATIERES: D.MATIERES,
     enMin: enMin, enHeure: enHeure, heureValide: heureValide, fmtDuree: fmtDuree,
     iso: iso, dateDe: dateDe, dateValide: dateValide, ajouterJours: ajouterJours, ecartJours: ecartJours, jourSemaine: jourSemaine,

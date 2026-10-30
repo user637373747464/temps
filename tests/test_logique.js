@@ -585,3 +585,24 @@ test('modification du planning DS : changer un samedi change le jour', () => {
   assert.equal(T.periode('2026-11-04', d.ds), 'cours');
   assert.equal(T.dsDuJour('2026-11-07', d.ds), null);
 });
+
+/* ---------- fichier pour les widgets ---------- */
+test('pourWidgets : 28 jours, sans blocs libres, avec colles et tâches', () => {
+  const d = neuf();
+  d.colles.push({ id: 'c1', date: '2026-11-04', debut: '10:10', duree: 60, matiere: 'Mathématiques', colleur: 'Mme X', salle: '3-21' });
+  d.colles.push({ id: 'c0', date: '2026-10-20', debut: '10:10', duree: 60, matiere: 'Ancienne', colleur: '', salle: '' });
+  d.taches.push({ id: 't1', date: '2026-11-04', texte: 'Relire le cours', fait: false });
+  d.blocs['2026-11-04'] = [{ id: 'b1', nom: 'Maths', debut: '16:00', fin: '17:00' }];
+  const w = T.pourWidgets(d, '2026-11-04', 12345);
+  assert.equal(w.app, 'temps-widget');
+  assert.equal(w.genere, 12345);
+  assert.equal(Object.keys(w.jours).length, 28);
+  assert.ok(w.jours['2026-11-04'] && w.jours['2026-12-01'] && !w.jours['2026-12-02']);
+  const j = w.jours['2026-11-04'];
+  assert.equal(j.semaine, 'A');
+  assert.ok(j.items.every(i => i.kind !== 'vide'));
+  assert.ok(j.items.some(i => i.kind === 'colle' && i.debut === '10:10' && i.fin === '11:10'));
+  assert.ok(j.items.some(i => i.kind === 'bloc' && i.titre === 'Maths'));
+  assert.equal(w.colles.length, 1);                      // la colle d'avant la semaine en cours est écartée
+  assert.deepEqual(w.taches, [{ texte: 'Relire le cours', date: '2026-11-04', fait: false }]);
+});
